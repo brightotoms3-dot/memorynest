@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract calming background",
+      "imageUrl": "https://picsum.photos/seed/memories-hero/1200/800",
+      "imageHint": "abstract sunset"
+    },
+    {
+      "id": "demo-memory-1",
+      "description": "A sunny walk in the park",
+      "imageUrl": "https://picsum.photos/seed/park-walk/600/400",
+      "imageHint": "sunny park"
+    },
+    {
+      "id": "demo-memory-2",
+      "description": "Enjoying a quiet cup of coffee",
+      "imageUrl": "https://picsum.photos/seed/coffee-moment/600/400",
+      "imageHint": "coffee cup"
+    },
+    {
+      "id": "demo-memory-3",
+      "description": "Watching the stars at night",
+      "imageUrl": "https://picsum.photos/seed/stargazing/600/400",
+      "imageHint": "starry night"
+    }
+  ]
+}
