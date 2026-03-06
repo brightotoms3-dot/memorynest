@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about a registered user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "isPremium": { "type": "boolean" }
+      },
+      "required": ["id", "email", "name"]
+    },
+    "Memory": {
+      "title": "Daily Memory",
+      "description": "A single journal entry with AI story.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "whatHappened": { "type": "string" },
+        "whatMadeYouHappy": { "type": "string" },
+        "didYouLearnSomething": { "type": "string" },
+        "story": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "date", "whatHappened", "whatMadeYouHappy", "story", "userId"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data."
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": "Memory",
+      "description": "Daily memories for a specific user."
+    }
+  }
+}
