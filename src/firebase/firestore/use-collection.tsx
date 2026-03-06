@@ -28,7 +28,7 @@ export function useCollection<T = DocumentData>(query: Query<T> | null) {
           ...doc.data(),
           id: doc.id,
         }));
-        setData(items);
+        setData(items as (T & { id: string })[]);
         setLoading(false);
       },
       async (serverError) => {
