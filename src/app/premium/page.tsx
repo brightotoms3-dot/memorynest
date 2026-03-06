@@ -1,22 +1,47 @@
 "use client"
 
-import { useStore } from '@/lib/store';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
-import { Check, Crown, Sparkles, Download, Calendar, Zap } from 'lucide-react';
+import { Check, Crown, Sparkles, Download, Calendar, Zap, Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useUser, useFirestore, useDoc } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useMemo } from 'react';
 
 export default function PremiumPage() {
-  const { user, setPremium } = useStore();
+  const { user, loading: userLoading } = useUser();
+  const db = useFirestore();
   const router = useRouter();
 
-  const handleUpgrade = () => {
-    setPremium(true);
-    toast({ title: "Welcome to Premium!", description: "You now have unlimited access to all features." });
-    router.push('/dashboard');
+  const userProfileRef = useMemo(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
+  const { data: userProfile, loading: profileLoading } = useDoc(userProfileRef);
+
+  const handleUpgrade = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'users', user.uid), { isPremium: true });
+      toast({ title: "Welcome to Premium!", description: "You now have unlimited access to all features." });
+      router.push('/dashboard');
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Upgrade failed", description: "Please try again later." });
+    }
   };
+
+  if (userLoading || profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const isPremium = userProfile?.isPremium || false;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -61,8 +86,8 @@ export default function PremiumPage() {
               </ul>
             </CardContent>
             <CardFooter className="p-0 pt-10">
-              <Button variant="outline" className="w-full h-14 rounded-2xl text-lg font-bold cursor-default opacity-50">
-                {user?.isPremium ? 'Active Plan' : 'Your Current Plan'}
+              <Button variant="outline" className="w-full h-14 rounded-2xl text-lg font-bold cursor-default opacity-50" disabled>
+                {isPremium ? 'Basic Plan' : 'Your Current Plan'}
               </Button>
             </CardFooter>
           </Card>
@@ -113,34 +138,14 @@ export default function PremiumPage() {
                 onClick={handleUpgrade}
                 variant="secondary" 
                 className="w-full h-14 rounded-2xl text-lg font-bold btn-hover-effect shadow-xl"
+                disabled={isPremium}
               >
-                {user?.isPremium ? 'Already Premium' : 'Upgrade to Premium'}
+                {isPremium ? 'Already Premium' : 'Upgrade to Premium'}
               </Button>
             </CardFooter>
             <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mb-32 blur-3xl" />
           </Card>
         </div>
-
-        <section className="mt-32 max-w-4xl mx-auto grid md:grid-cols-2 gap-12">
-          <div className="flex gap-6">
-            <div className="w-14 h-14 shrink-0 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
-              <Zap className="w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="text-xl font-headline font-bold mb-2">Unlimited Captures</h3>
-              <p className="text-muted-foreground">Never worry about limits again. Record every small joy and major milestone without hesitation.</p>
-            </div>
-          </div>
-          <div className="flex gap-6">
-            <div className="w-14 h-14 shrink-0 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Sparkles className="w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="text-xl font-headline font-bold mb-2">Yearly Recaps</h3>
-              <p className="text-muted-foreground">Our AI synthesizes an entire year of memories into a cohesive, beautiful story you can share with family.</p>
-            </div>
-          </div>
-        </section>
       </main>
     </div>
   );

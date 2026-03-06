@@ -7,20 +7,48 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Sparkles, ArrowLeft } from 'lucide-react';
-import { useStore } from '@/lib/store';
+import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login } = useStore();
+  const auth = useAuth();
+  const db = useFirestore();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, name);
-    router.push('/dashboard');
+    setIsLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: name });
+
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        id: user.uid,
+        email: user.email,
+        name: name,
+        isPremium: false,
+      });
+
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Signup Failed',
+        description: error.message || 'Could not create account.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,6 +76,7 @@ export default function SignupPage() {
                 required 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -59,6 +88,7 @@ export default function SignupPage() {
                 required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -69,9 +99,12 @@ export default function SignupPage() {
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full h-12 text-lg btn-hover-effect mt-2">Sign Up Free</Button>
+            <Button type="submit" className="w-full h-12 text-lg btn-hover-effect mt-2" disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Up Free'}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">

@@ -1,17 +1,18 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useStore } from '@/lib/store';
 import { createMemoryStory } from '@/ai/flows/create-memory-story';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Sparkles, Loader2, ArrowLeft, Camera, Send } from 'lucide-react';
+import { Sparkles, Loader2, ArrowLeft, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function NewMemoryPage() {
   const [whatHappened, setWhatHappened] = useState('');
@@ -20,11 +21,20 @@ export default function NewMemoryPage() {
   const [photoUrl, setPhotoUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   
-  const { addMemory, user } = useStore();
+  const { user, loading: userLoading } = useUser();
+  const db = useFirestore();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, userLoading, router]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     if (!whatHappened || !whatMadeYouHappy) {
       toast({ title: "Please fill in the required fields", variant: "destructive" });
       return;
@@ -38,14 +48,28 @@ export default function NewMemoryPage() {
         didYouLearnSomething: didYouLearnSomething || undefined,
       });
 
-      const newMemory = addMemory({
+      const memoriesRef = collection(db, 'users', user.uid, 'memories');
+      const memoryData = {
         date: new Date().toISOString(),
         whatHappened,
         whatMadeYouHappy,
-        didYouLearnSomething: didYouLearnSomething || undefined,
+        didYouLearnSomething: didYouLearnSomething || "",
         story: result.story,
-        photoUrl: photoUrl || `https://picsum.photos/seed/${Math.random()}/600/400`, // Simulated photo if none provided
-      });
+        photoUrl: photoUrl || `https://picsum.photos/seed/${Math.random()}/600/400`,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      };
+
+      // Firestore mutation
+      addDoc(memoriesRef, memoryData)
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: memoriesRef.path,
+            operation: 'create',
+            requestResourceData: memoryData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
 
       toast({ title: "Memory created beautifully!" });
       router.push('/dashboard');
@@ -55,6 +79,14 @@ export default function NewMemoryPage() {
       setIsGenerating(false);
     }
   };
+
+  if (userLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary/10 pb-20">
@@ -87,6 +119,7 @@ export default function NewMemoryPage() {
                   required
                   value={whatHappened}
                   onChange={(e) => setWhatHappened(e.target.value)}
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -99,6 +132,7 @@ export default function NewMemoryPage() {
                   required
                   value={whatMadeYouHappy}
                   onChange={(e) => setWhatMadeYouHappy(e.target.value)}
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -110,6 +144,7 @@ export default function NewMemoryPage() {
                   className="min-h-[100px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   value={didYouLearnSomething}
                   onChange={(e) => setDidYouLearnSomething(e.target.value)}
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -117,7 +152,7 @@ export default function NewMemoryPage() {
                 <Label className="text-lg font-bold">Add a photo (Optional)</Label>
                 <div 
                   className="border-2 border-dashed border-muted rounded-3xl p-10 flex flex-col items-center justify-center bg-secondary/10 hover:bg-secondary/20 transition-colors cursor-pointer"
-                  onClick={() => setPhotoUrl(`https://picsum.photos/seed/${Math.random()}/600/400`)}
+                  onClick={() => !isGenerating && setPhotoUrl(`https://picsum.photos/seed/${Math.random()}/600/400`)}
                 >
                   {photoUrl ? (
                     <div className="relative w-full aspect-video rounded-2xl overflow-hidden">

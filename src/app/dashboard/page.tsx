@@ -1,26 +1,51 @@
 "use client"
 
-import { useStore } from '@/lib/store';
 import { Navbar } from '@/components/navbar';
 import { MemoryCard } from '@/components/memory-card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar as CalendarIcon, Filter, Crown, Sparkles, TrendingUp } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Filter, Crown, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useEffect, useMemo } from 'react';
+import { Card } from '@/components/ui/card';
+import { useUser, useCollection, useDoc, useFirestore } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const { user, memories, isInitialized } = useStore();
+  const { user, loading: userLoading } = useUser();
+  const db = useFirestore();
   const router = useRouter();
 
   useEffect(() => {
-    if (isInitialized && !user) {
+    if (!userLoading && !user) {
       router.push('/login');
     }
-  }, [user, isInitialized, router]);
+  }, [user, userLoading, router]);
 
-  if (!isInitialized || !user) return null;
+  // Fetch user profile for premium status
+  const userProfileRef = useMemo(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
+  const { data: userProfile } = useDoc(userProfileRef);
+
+  // Fetch memories
+  const memoriesQuery = useMemo(() => {
+    if (!user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'memories'),
+      orderBy('date', 'desc')
+    );
+  }, [db, user]);
+
+  const { data: memories, loading: memoriesLoading } = useCollection(memoriesQuery);
+
+  if (userLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const isPremium = userProfile?.isPremium || false;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -29,7 +54,7 @@ export default function DashboardPage() {
       <main className="max-w-6xl mx-auto px-6 pt-10">
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-headline font-bold mb-2">Hello, {user.name.split(' ')[0]}!</h1>
+            <h1 className="text-4xl font-headline font-bold mb-2">Hello, {user.displayName?.split(' ')[0] || 'User'}!</h1>
             <p className="text-muted-foreground text-lg">You have captured {memories.length} beautiful memories so far.</p>
           </div>
           <Button asChild className="h-14 px-8 text-lg rounded-2xl shadow-lg btn-hover-effect bg-primary">
@@ -54,7 +79,11 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {memories.length === 0 ? (
+            {memoriesLoading ? (
+              <div className="flex justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : memories.length === 0 ? (
               <Card className="border-dashed border-2 bg-secondary/10 flex flex-col items-center justify-center py-20 px-10 text-center rounded-3xl">
                 <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-6">
                   <Sparkles className="w-10 h-10" />
@@ -67,7 +96,7 @@ export default function DashboardPage() {
               </Card>
             ) : (
               <div className="grid gap-8">
-                {memories.map(memory => (
+                {memories.map((memory: any) => (
                   <MemoryCard key={memory.id} memory={memory} />
                 ))}
               </div>
@@ -81,7 +110,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-headline font-bold">Plan Details</h3>
                   <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider">
-                    {user.isPremium ? 'Premium' : 'Free'}
+                    {isPremium ? 'Premium' : 'Free'}
                   </div>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -96,7 +125,7 @@ export default function DashboardPage() {
                     />
                   </div>
                 </div>
-                {!user.isPremium && (
+                {!isPremium && (
                   <Button variant="secondary" asChild className="w-full rounded-2xl h-12 btn-hover-effect">
                     <Link href="/premium">
                       <Crown className="w-4 h-4 mr-2 text-amber-500" /> Upgrade to Premium
@@ -115,21 +144,21 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="p-4 rounded-2xl bg-secondary/30">
                   <p className="text-sm text-muted-foreground mb-1">Consistency</p>
-                  <p className="text-2xl font-bold">12 Day Streak</p>
+                  <p className="text-2xl font-bold">{memories.length > 0 ? 'Getting Started' : 'No Streak'}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-secondary/30">
                   <p className="text-sm text-muted-foreground mb-1">Happy Moments</p>
-                  <p className="text-2xl font-bold">24 Captured</p>
+                  <p className="text-2xl font-bold">{memories.length} Captured</p>
                 </div>
               </div>
               
               <Button 
                 className="w-full rounded-2xl h-12 bg-accent text-accent-foreground btn-hover-effect"
-                disabled={!user.isPremium}
+                disabled={!isPremium}
               >
                 <Sparkles className="w-4 h-4 mr-2" /> Generate Year Recap
               </Button>
-              {!user.isPremium && (
+              {!isPremium && (
                 <p className="text-xs text-center text-muted-foreground">Yearly recaps are a premium feature.</p>
               )}
             </Card>

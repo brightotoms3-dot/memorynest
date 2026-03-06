@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sparkles, LayoutDashboard, Crown, LogOut, User } from 'lucide-react';
-import { useStore } from '@/lib/store';
+import { Sparkles, LayoutDashboard, Crown, LogOut } from 'lucide-react';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
@@ -16,11 +17,12 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Navbar() {
-  const { user, logout } = useStore();
+  const { user } = useUser();
+  const auth = useAuth();
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut(auth);
     router.push('/');
   };
 
@@ -54,7 +56,7 @@ export function Navbar() {
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-primary/10 text-primary uppercase">
-                  {user?.name?.[0] || 'U'}
+                  {user?.displayName?.[0] || user?.email?.[0] || 'U'}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -62,7 +64,7 @@ export function Navbar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.name}</p>
+                <p className="text-sm font-medium leading-none">{user?.displayName || 'User'}</p>
                 <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
