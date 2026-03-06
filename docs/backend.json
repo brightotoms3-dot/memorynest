@@ -2,7 +2,7 @@
   "entities": {
     "User": {
       "title": "User Profile",
-      "description": "Information about a registered user.",
+      "description": "Information about a registered user and their subscription status.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -14,7 +14,7 @@
     },
     "Memory": {
       "title": "Daily Memory",
-      "description": "A single journal entry with AI story.",
+      "description": "A single journal entry with AI-generated narrative and optional photo.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -35,11 +35,11 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "User profile data."
+      "description": "User profile data for individual users."
     },
     "/users/{userId}/memories/{memoryId}": {
       "schema": "Memory",
-      "description": "Daily memories for a specific user."
+      "description": "Personal timeline of daily memories for a specific user."
     }
   }
 }
