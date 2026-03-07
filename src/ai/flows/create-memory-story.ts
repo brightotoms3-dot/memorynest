@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A Genkit flow for generating a short, emotional memory story from user inputs.
+ * @fileOverview A Genkit flow for generating a short, humanized, and easy-to-read memory story.
  *
  * - createMemoryStory - A function that generates a memory story.
  * - CreateMemoryStoryInput - The input type for the createMemoryStory function.
@@ -33,7 +33,7 @@ export type CreateMemoryStoryInput = z.infer<typeof CreateMemoryStoryInputSchema
 const CreateMemoryStoryOutputSchema = z.object({
   story: z
     .string()
-    .describe('A short, emotional story about the day, 3-5 sentences long.')
+    .describe('A very simple, conversational, and easy-to-understand story about the day, 2-3 short sentences.')
 });
 export type CreateMemoryStoryOutput = z.infer<typeof CreateMemoryStoryOutputSchema>;
 
@@ -47,24 +47,23 @@ const createMemoryStoryPrompt = ai.definePrompt({
   name: 'createMemoryStoryPrompt',
   input: {schema: CreateMemoryStoryInputSchema},
   output: {schema: CreateMemoryStoryOutputSchema},
-  prompt: `You are an AI assistant that specializes in writing short, emotional, and reflective memory stories based on daily inputs. Your task is to transform the provided information into a concise story, 3 to 5 sentences in length. Focus on capturing the essence and emotion of the day.
+  prompt: `You are an AI that writes daily memories in a very human, simple, and conversational way. 
+The goal is to make the story easy to read and understand for everyone, especially people who don't like reading long texts.
 
-Here are today's memories:
+Rules:
+1. Use very simple language. No fancy words.
+2. Keep it short: only 2 to 3 punchy sentences.
+3. Make it feel like a warm text message from a friend.
+4. Focus on the feeling of the day.
 
-What happened today: {{{whatHappened}}}
+Inputs:
+What happened: {{{whatHappened}}}
+What made them happy: {{{whatMadeYouHappy}}}
+{{#if didYouLearnSomething}}What they learned: {{{didYouLearnSomething}}}{{/if}}
+{{#if photoDataUri}}Photo reference included.{{/if}}
 
-What made you happy: {{{whatMadeYouHappy}}}
-
-{{#if didYouLearnSomething}}
-What you learned: {{{didYouLearnSomething}}}
-{{/if}}
-
-{{#if photoDataUri}}
-Photo: {{media url=photoDataUri}}
-{{/if}}
-
-Rewrite these inputs into a beautiful, emotional memory story, 3 to 5 sentences long.
-Example output style: "Today was a refreshing and peaceful day. I spent some time outside enjoying the cool wind, which made the moment feel calm and relaxing. Small moments like these remind us how beautiful simple days can be."`
+Example Style:
+"Today was so nice. I finally got some fresh air on a long walk, and the sun felt amazing. It's the little things that count."`
 });
 
 const createMemoryStoryFlow = ai.defineFlow(

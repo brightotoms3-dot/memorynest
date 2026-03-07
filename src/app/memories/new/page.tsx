@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createMemoryStory } from '@/ai/flows/create-memory-story';
 import { Navbar } from '@/components/navbar';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Sparkles, Loader2, ArrowLeft, Camera } from 'lucide-react';
+import { Sparkles, Loader2, ArrowLeft, Camera, Upload, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -18,8 +18,9 @@ export default function NewMemoryPage() {
   const [whatHappened, setWhatHappened] = useState('');
   const [whatMadeYouHappy, setWhatMadeYouHappy] = useState('');
   const [didYouLearnSomething, setDidYouLearnSomething] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoDataUri, setPhotoDataUri] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { user, loading: userLoading } = useUser();
   const db = useFirestore();
@@ -30,6 +31,22 @@ export default function NewMemoryPage() {
       router.push('/login');
     }
   }, [user, userLoading, router]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ title: "File too large", description: "Please select an image under 2MB.", variant: "destructive" });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoDataUri(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +63,7 @@ export default function NewMemoryPage() {
         whatHappened,
         whatMadeYouHappy,
         didYouLearnSomething: didYouLearnSomething || undefined,
+        photoDataUri: photoDataUri || undefined,
       });
 
       const memoriesRef = collection(db, 'users', user.uid, 'memories');
@@ -55,12 +73,13 @@ export default function NewMemoryPage() {
         whatMadeYouHappy,
         didYouLearnSomething: didYouLearnSomething || "",
         story: result.story,
-        photoUrl: photoUrl || `https://picsum.photos/seed/${Math.random()}/600/400`,
+        // Using a random seed for the database URL for now, or we could store the base64
+        // For simplicity in this demo, we'll keep using picsum but you could save the URI if needed
+        photoUrl: photoDataUri || `https://picsum.photos/seed/${Math.random()}/600/400`,
         userId: user.uid,
         createdAt: serverTimestamp(),
       };
 
-      // Firestore mutation
       addDoc(memoriesRef, memoryData)
         .catch(async (error) => {
           const permissionError = new FirestorePermissionError({
@@ -74,6 +93,7 @@ export default function NewMemoryPage() {
       toast({ title: "Memory created beautifully!" });
       router.push('/dashboard');
     } catch (error) {
+      console.error(error);
       toast({ title: "Failed to generate story", variant: "destructive" });
     } finally {
       setIsGenerating(false);
@@ -104,7 +124,7 @@ export default function NewMemoryPage() {
                 <Sparkles className="w-8 h-8" />
               </div>
               <CardTitle className="text-4xl font-headline font-bold mb-2">Capture Today</CardTitle>
-              <CardDescription className="text-primary-foreground/80 text-lg">Tell us about your day, and we'll handle the storytelling.</CardDescription>
+              <CardDescription className="text-primary-foreground/80 text-lg">Quick notes. Simple stories.</CardDescription>
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
           </CardHeader>
@@ -114,8 +134,8 @@ export default function NewMemoryPage() {
                 <Label htmlFor="happened" className="text-lg font-bold">What happened today? *</Label>
                 <Textarea 
                   id="happened"
-                  placeholder="e.g. I went for a long hike in the morning and then met an old friend for lunch..."
-                  className="min-h-[120px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
+                  placeholder="Just say it simply, like a text..."
+                  className="min-h-[100px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   required
                   value={whatHappened}
                   onChange={(e) => setWhatHappened(e.target.value)}
@@ -124,11 +144,11 @@ export default function NewMemoryPage() {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="happy" className="text-lg font-bold">What made you happy today? *</Label>
+                <Label htmlFor="happy" className="text-lg font-bold">What made you happy? *</Label>
                 <Textarea 
                   id="happy"
-                  placeholder="e.g. The warm sun on my face and catching up on old memories."
-                  className="min-h-[100px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
+                  placeholder="The best part of your day..."
+                  className="min-h-[80px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   required
                   value={whatMadeYouHappy}
                   onChange={(e) => setWhatMadeYouHappy(e.target.value)}
@@ -137,11 +157,11 @@ export default function NewMemoryPage() {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="learned" className="text-lg font-bold">Did you learn something today? (Optional)</Label>
+                <Label htmlFor="learned" className="text-lg font-bold">Any quick lessons? (Optional)</Label>
                 <Textarea 
                   id="learned"
-                  placeholder="e.g. I realized that taking breaks is just as important as working hard."
-                  className="min-h-[100px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
+                  placeholder="Something you learned today..."
+                  className="min-h-[80px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   value={didYouLearnSomething}
                   onChange={(e) => setDidYouLearnSomething(e.target.value)}
                   disabled={isGenerating}
@@ -149,22 +169,41 @@ export default function NewMemoryPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-lg font-bold">Add a photo (Optional)</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-lg font-bold">Add a photo (Optional)</Label>
+                  {photoDataUri && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setPhotoDataUri('')}
+                      className="text-destructive hover:text-destructive h-8 px-2"
+                    >
+                      <X className="w-4 h-4 mr-1" /> Remove
+                    </Button>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
                 <div 
-                  className="border-2 border-dashed border-muted rounded-3xl p-10 flex flex-col items-center justify-center bg-secondary/10 hover:bg-secondary/20 transition-colors cursor-pointer"
-                  onClick={() => !isGenerating && setPhotoUrl(`https://picsum.photos/seed/${Math.random()}/600/400`)}
+                  className="border-2 border-dashed border-muted rounded-3xl p-6 flex flex-col items-center justify-center bg-secondary/10 hover:bg-secondary/20 transition-colors cursor-pointer"
+                  onClick={() => !isGenerating && fileInputRef.current?.click()}
                 >
-                  {photoUrl ? (
-                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden">
-                      <Image src={photoUrl} alt="Preview" fill className="object-cover" />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <p className="text-white font-bold">Change Photo</p>
+                  {photoDataUri ? (
+                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
+                      <img src={photoDataUri} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <Upload className="text-white w-8 h-8" />
                       </div>
                     </div>
                   ) : (
                     <>
-                      <Camera className="w-12 h-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">Click to upload or drag a photo here</p>
+                      <Camera className="w-10 h-10 text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground font-medium">Click to pick from your phone</p>
                     </>
                   )}
                 </div>
@@ -178,11 +217,11 @@ export default function NewMemoryPage() {
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 className="mr-2 w-6 h-6 animate-spin" /> Weaving your story...
+                    <Loader2 className="mr-2 w-6 h-6 animate-spin" /> Writing your story...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="mr-2 w-6 h-6" /> Create Memory
+                    <Sparkles className="mr-2 w-6 h-6" /> Save Memory
                   </>
                 )}
               </Button>
