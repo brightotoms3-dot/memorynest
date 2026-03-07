@@ -1,8 +1,9 @@
+
 "use client"
 
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
-import { Check, Crown, Sparkles, Download, Calendar, Zap, Loader2 } from 'lucide-react';
+import { Check, Crown, Sparkles, Download, Calendar, Zap, Loader2, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -18,12 +19,24 @@ export default function PremiumPage() {
   const userProfileRef = useMemo(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userProfile, loading: profileLoading } = useDoc(userProfileRef);
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = () => {
     if (!user) {
       router.push('/login');
       return;
     }
+    
+    // Redirect to Paystack payment link
+    window.open("https://paystack.shop/pay/0gzglif70o", "_blank");
+    
+    toast({ 
+      title: "Opening Payment Page", 
+      description: "Complete your payment at Paystack to unlock premium features." 
+    });
+  };
 
+  // For testing purposes in the prototype: a way to actually toggle premium status
+  const simulateUpgrade = async () => {
+    if (!user) return;
     try {
       await updateDoc(doc(db, 'users', user.uid), { isPremium: true });
       toast({ title: "Welcome to Premium!", description: "You now have unlimited access to all features." });
@@ -133,15 +146,28 @@ export default function PremiumPage() {
                 </li>
               </ul>
             </CardContent>
-            <CardFooter className="p-0 pt-10 relative z-10">
+            <CardFooter className="p-0 pt-10 relative z-10 flex flex-col gap-4">
               <Button 
                 onClick={handleUpgrade}
                 variant="secondary" 
                 className="w-full h-14 rounded-2xl text-lg font-bold btn-hover-effect shadow-xl"
                 disabled={isPremium}
               >
-                {isPremium ? 'Already Premium' : 'Upgrade to Premium'}
+                {isPremium ? 'Already Premium' : (
+                  <>
+                    Pay with Paystack <ExternalLink className="ml-2 w-5 h-5" />
+                  </>
+                )}
               </Button>
+              {!isPremium && (
+                <Button 
+                  onClick={simulateUpgrade}
+                  variant="ghost" 
+                  className="w-full text-xs text-white/60 hover:text-white hover:bg-white/10"
+                >
+                  (Dev) Simulate Success
+                </Button>
+              )}
             </CardFooter>
             <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mb-32 blur-3xl" />
           </Card>
