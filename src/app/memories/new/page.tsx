@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
@@ -8,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Sparkles, Loader2, ArrowLeft, Camera, Upload, X } from 'lucide-react';
+import { Sparkles, Loader2, ArrowLeft, Camera, Upload, X, Mic, MicOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import Image from 'next/image';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -20,6 +20,7 @@ export default function NewMemoryPage() {
   const [didYouLearnSomething, setDidYouLearnSomething] = useState('');
   const [photoDataUri, setPhotoDataUri] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeMic, setActiveMic] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { user, loading: userLoading } = useUser();
@@ -48,6 +49,48 @@ export default function NewMemoryPage() {
     }
   };
 
+  const startListening = (field: 'happened' | 'happy' | 'learned') => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      toast({ 
+        title: "Voice Not Supported", 
+        description: "Your browser doesn't support voice dictation. Try using Chrome or Safari.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setActiveMic(field);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (field === 'happened') setWhatHappened(prev => prev + (prev ? ' ' : '') + transcript);
+      if (field === 'happy') setWhatMadeYouHappy(prev => prev + (prev ? ' ' : '') + transcript);
+      if (field === 'learned') setDidYouLearnSomething(prev => prev + (prev ? ' ' : '') + transcript);
+      toast({ title: "Captured your voice!" });
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error', event.error);
+      setActiveMic(null);
+      toast({ title: "Microphone error", description: event.error, variant: "destructive" });
+    };
+
+    recognition.onend = () => {
+      setActiveMic(null);
+    };
+
+    recognition.start();
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -73,8 +116,6 @@ export default function NewMemoryPage() {
         whatMadeYouHappy,
         didYouLearnSomething: didYouLearnSomething || "",
         story: result.story,
-        // Using a random seed for the database URL for now, or we could store the base64
-        // For simplicity in this demo, we'll keep using picsum but you could save the URI if needed
         photoUrl: photoDataUri || `https://picsum.photos/seed/${Math.random()}/600/400`,
         userId: user.uid,
         createdAt: serverTimestamp(),
@@ -124,17 +165,28 @@ export default function NewMemoryPage() {
                 <Sparkles className="w-8 h-8" />
               </div>
               <CardTitle className="text-4xl font-headline font-bold mb-2">Capture Today</CardTitle>
-              <CardDescription className="text-primary-foreground/80 text-lg">Quick notes. Simple stories.</CardDescription>
+              <CardDescription className="text-primary-foreground/80 text-lg">Speak or type your day. We'll tell the story.</CardDescription>
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
           </CardHeader>
           <CardContent className="p-10">
             <form onSubmit={handleCreate} className="space-y-8">
               <div className="space-y-3">
-                <Label htmlFor="happened" className="text-lg font-bold">What happened today? *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="happened" className="text-lg font-bold">What happened today? *</Label>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`rounded-full h-10 w-10 p-0 ${activeMic === 'happened' ? 'bg-red-100 text-red-500 animate-pulse' : 'text-primary'}`}
+                    onClick={() => startListening('happened')}
+                  >
+                    {activeMic === 'happened' ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </Button>
+                </div>
                 <Textarea 
                   id="happened"
-                  placeholder="Just say it simply, like a text..."
+                  placeholder="Tell me what you did today..."
                   className="min-h-[100px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   required
                   value={whatHappened}
@@ -144,10 +196,21 @@ export default function NewMemoryPage() {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="happy" className="text-lg font-bold">What made you happy? *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="happy" className="text-lg font-bold">What made you happy? *</Label>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`rounded-full h-10 w-10 p-0 ${activeMic === 'happy' ? 'bg-red-100 text-red-500 animate-pulse' : 'text-primary'}`}
+                    onClick={() => startListening('happy')}
+                  >
+                    {activeMic === 'happy' ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </Button>
+                </div>
                 <Textarea 
                   id="happy"
-                  placeholder="The best part of your day..."
+                  placeholder="What was the best part?"
                   className="min-h-[80px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   required
                   value={whatMadeYouHappy}
@@ -157,10 +220,21 @@ export default function NewMemoryPage() {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="learned" className="text-lg font-bold">Any quick lessons? (Optional)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="learned" className="text-lg font-bold">Any quick lessons? (Optional)</Label>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`rounded-full h-10 w-10 p-0 ${activeMic === 'learned' ? 'bg-red-100 text-red-500 animate-pulse' : 'text-primary'}`}
+                    onClick={() => startListening('learned')}
+                  >
+                    {activeMic === 'learned' ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </Button>
+                </div>
                 <Textarea 
                   id="learned"
-                  placeholder="Something you learned today..."
+                  placeholder="Did you learn something new?"
                   className="min-h-[80px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   value={didYouLearnSomething}
                   onChange={(e) => setDidYouLearnSomething(e.target.value)}
@@ -203,7 +277,7 @@ export default function NewMemoryPage() {
                   ) : (
                     <>
                       <Camera className="w-10 h-10 text-muted-foreground mb-3" />
-                      <p className="text-muted-foreground font-medium">Click to pick from your phone</p>
+                      <p className="text-muted-foreground font-medium">Add a photo from your phone</p>
                     </>
                   )}
                 </div>
