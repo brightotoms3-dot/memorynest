@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Navbar } from '@/components/navbar';
@@ -22,9 +23,9 @@ export default function DashboardPage() {
     }
   }, [user, userLoading, router]);
 
-  // Fetch user profile for premium status
+  // Fetch user profile for premium status and accurate name
   const userProfileRef = useMemo(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
-  const { data: userProfile } = useDoc(userProfileRef);
+  const { data: userProfile, loading: profileLoading } = useDoc(userProfileRef);
 
   // Fetch memories
   const memoriesQuery = useMemo(() => {
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   }
 
   const isPremium = userProfile?.isPremium || false;
+  const displayName = userProfile?.name || user.displayName || 'User';
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -54,7 +56,7 @@ export default function DashboardPage() {
       <main className="max-w-6xl mx-auto px-6 pt-10">
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-headline font-bold mb-2">Hello, {user.displayName?.split(' ')[0] || 'User'}!</h1>
+            <h1 className="text-4xl font-headline font-bold mb-2">Welcome back, {displayName.split(' ')[0]}!</h1>
             <p className="text-muted-foreground text-lg">You have captured {memories.length} beautiful memories so far.</p>
           </div>
           <Button asChild className="h-14 px-8 text-lg rounded-2xl shadow-lg btn-hover-effect bg-primary">

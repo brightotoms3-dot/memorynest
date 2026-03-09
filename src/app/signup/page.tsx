@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -31,8 +32,10 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Set display name in Firebase Auth
       await updateProfile(user, { displayName: name });
 
+      // Create user profile in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         id: user.uid,
         email: user.email,
@@ -40,6 +43,7 @@ export default function SignupPage() {
         isPremium: false,
       });
 
+      toast({ title: "Account created!", description: `Welcome to MemoryNest, ${name}!` });
       router.push('/dashboard');
     } catch (error: any) {
       toast({
