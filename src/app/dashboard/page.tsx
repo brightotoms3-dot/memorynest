@@ -1,10 +1,9 @@
-
 "use client"
 
 import { Navbar } from '@/components/navbar';
 import { MemoryCard } from '@/components/memory-card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar as CalendarIcon, Filter, Crown, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Filter, Crown, Bird, TrendingUp, Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
@@ -88,7 +87,7 @@ export default function DashboardPage() {
             ) : memories.length === 0 ? (
               <Card className="border-dashed border-2 bg-secondary/10 flex flex-col items-center justify-center py-20 px-10 text-center rounded-3xl">
                 <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-6">
-                  <Sparkles className="w-10 h-10" />
+                  <Bird className="w-10 h-10" />
                 </div>
                 <h3 className="text-2xl font-headline font-bold mb-2">Your nest is empty</h3>
                 <p className="text-muted-foreground mb-8 max-w-sm">Start your journey by capturing your first memory today. Our AI will help you tell the story.</p>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sparkles, LayoutDashboard, Crown, LogOut } from 'lucide-react';
+import { Bird, LayoutDashboard, Crown, LogOut } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -31,7 +31,7 @@ export function Navbar() {
       <div className="flex items-center gap-8">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-            <Sparkles className="w-5 h-5" />
+            <Bird className="w-5 h-5" />
           </div>
           <span className="text-lg font-headline font-bold text-primary">MemoryNest</span>
         </Link>

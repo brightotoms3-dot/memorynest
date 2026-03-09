@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Heart, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { Bird, Heart, Clock, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser } from '@/firebase';
@@ -17,7 +17,7 @@ export default function LandingPage() {
       <header className="px-6 lg:px-12 h-20 flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
-            <Sparkles className="w-6 h-6" />
+            <Bird className="w-6 h-6" />
           </div>
           <span className="text-xl font-headline font-bold text-primary">MemoryNest</span>
         </div>
@@ -49,7 +49,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="px-6 py-20 lg:py-32 flex flex-col items-center text-center max-w-5xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
+            <Bird className="w-4 h-4" />
             <span>AI-Powered Memory Journaling</span>
           </div>
           <h1 className="text-5xl lg:text-7xl font-headline font-bold mb-6 text-foreground leading-tight">
@@ -128,7 +128,7 @@ export default function LandingPage() {
 
       <footer className="py-12 px-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6 max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
+          <Bird className="w-5 h-5 text-primary" />
           <span className="font-headline font-bold text-lg">MemoryNest</span>
         </div>
         <div className="flex gap-8 text-sm text-muted-foreground">

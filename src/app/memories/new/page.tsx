@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Sparkles, Loader2, ArrowLeft, Camera, Upload, X, Mic, MicOff } from 'lucide-react';
+import { Bird, Loader2, ArrowLeft, Camera, Upload, X, Mic, MicOff, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -79,9 +78,7 @@ export default function NewMemoryPage() {
     };
 
     recognition.onerror = (event: any) => {
-      // Gracefully handle common errors without triggering development overlays
       setActiveMic(null);
-      // Removed console.error to prevent overlay. Only toast for actual errors.
       if (event.error !== 'aborted' && event.error !== 'no-speech') {
         toast({ title: "Microphone error", description: event.error, variant: "destructive" });
       }
@@ -164,7 +161,7 @@ export default function NewMemoryPage() {
           <CardHeader className="bg-primary text-primary-foreground p-10 text-center relative overflow-hidden">
             <div className="relative z-10">
               <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-8 h-8" />
+                <Bird className="w-8 h-8" />
               </div>
               <CardTitle className="text-4xl font-headline font-bold mb-2">Capture Today</CardTitle>
               <CardDescription className="text-primary-foreground/80 text-lg">Speak or type your day. We'll tell the story.</CardDescription>
