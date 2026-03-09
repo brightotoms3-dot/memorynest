@@ -79,9 +79,11 @@ export default function NewMemoryPage() {
     };
 
     recognition.onerror = (event: any) => {
-      console.error('Speech recognition error', event.error);
+      // Gracefully handle common errors without triggering development overlays
       setActiveMic(null);
-      toast({ title: "Microphone error", description: event.error, variant: "destructive" });
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        toast({ title: "Microphone error", description: event.error, variant: "destructive" });
+      }
     };
 
     recognition.onend = () => {
@@ -134,7 +136,6 @@ export default function NewMemoryPage() {
       toast({ title: "Memory created beautifully!" });
       router.push('/dashboard');
     } catch (error) {
-      console.error(error);
       toast({ title: "Failed to generate story", variant: "destructive" });
     } finally {
       setIsGenerating(false);

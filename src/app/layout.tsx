@@ -1,7 +1,9 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { DailyReminder } from '@/components/daily-reminder';
 
 export const metadata: Metadata = {
   title: 'MemoryNest | AI Memory Journal',
@@ -22,6 +24,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground">
         <FirebaseClientProvider>
+          <DailyReminder />
           {children}
           <Toaster />
         </FirebaseClientProvider>
