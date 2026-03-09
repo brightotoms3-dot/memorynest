@@ -3,7 +3,6 @@
 
 import { useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { Bell } from 'lucide-react';
 
 export function DailyReminder() {
   useEffect(() => {
@@ -31,17 +30,16 @@ export function DailyReminder() {
         if (lastNotifiedDate !== todayDate) {
           // Show browser notification
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('MemoryNest Reminder', {
-              body: "It's 7 PM! Time to capture your beautiful moments for today.",
-              icon: '/favicon.ico', // Fallback
+            new Notification('MemoryNest Alarm', {
+              body: "How did your day go? It's time to capture your beautiful moments.",
             });
           }
 
-          // Show in-app toast notification as an "alarm"
+          // Show in-app toast notification as a persistent "alarm"
           toast({
-            title: "Daily Memory Reminder",
-            description: "It's 7:00 PM. Don't forget to nest your memories today!",
-            duration: 10000, // Longer duration for the "alarm" feel
+            title: "How did your day go?",
+            description: "It's 7:00 PM. Take a moment to say how your day went and save a memory.",
+            duration: 30000, // 30 seconds for a persistent alarm feel
           });
 
           // Mark as notified for today

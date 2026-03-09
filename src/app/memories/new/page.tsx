@@ -81,6 +81,7 @@ export default function NewMemoryPage() {
     recognition.onerror = (event: any) => {
       // Gracefully handle common errors without triggering development overlays
       setActiveMic(null);
+      // Removed console.error to prevent overlay. Only toast for actual errors.
       if (event.error !== 'aborted' && event.error !== 'no-speech') {
         toast({ title: "Microphone error", description: event.error, variant: "destructive" });
       }
