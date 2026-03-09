@@ -6,16 +6,10 @@ import { Sparkles, Heart, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function LandingPage() {
   const { user, loading } = useUser();
-  const router = useRouter();
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-bg');
-
-  // If user is already logged in, we can optionally redirect them
-  // or just change the CTA buttons. Let's update the CTAs for a better UX.
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -65,20 +59,12 @@ export default function LandingPage() {
             Save your daily memories and let our AI turn raw thoughts into beautiful, emotional stories you'll cherish forever.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            {user ? (
-              <Button size="lg" asChild className="h-14 px-8 text-lg btn-hover-effect">
-                <Link href="/dashboard">Welcome Back, {user.displayName?.split(' ')[0] || 'User'}</Link>
-              </Button>
-            ) : (
-              <>
-                <Button size="lg" asChild className="h-14 px-8 text-lg btn-hover-effect">
-                  <Link href="/signup">Start Journaling Now</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild className="h-14 px-8 text-lg btn-hover-effect">
-                  <Link href="/login">View My Timeline</Link>
-                </Button>
-              </>
-            )}
+            <Button size="lg" asChild className="h-14 px-8 text-lg btn-hover-effect">
+              <Link href="/signup">Start Journaling Now</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="h-14 px-8 text-lg btn-hover-effect">
+              <Link href="/login">Log In to My Nest</Link>
+            </Button>
           </div>
 
           <div className="mt-20 w-full relative aspect-video max-w-4xl rounded-2xl overflow-hidden shadow-2xl border border-white/20">
@@ -129,8 +115,8 @@ export default function LandingPage() {
               <h2 className="text-4xl lg:text-5xl font-headline font-bold mb-6">Ready to preserve your legacy?</h2>
               <p className="text-xl opacity-90 mb-10 max-w-xl mx-auto">Join thousands of users who are turning simple days into lasting memories.</p>
               <Button size="lg" variant="secondary" asChild className="h-14 px-10 text-lg btn-hover-effect">
-                <Link href={user ? "/dashboard" : "/signup"}>
-                  {user ? "Back to Dashboard" : "Get Started for Free"} <ChevronRight className="ml-2 w-5 h-5" />
+                <Link href="/signup">
+                  Get Started for Free <ChevronRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
             </div>

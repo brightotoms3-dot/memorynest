@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -21,14 +21,7 @@ export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const db = useFirestore();
-  const { user, loading: authLoading } = useUser();
-
-  // Stay logged in: if user is already authenticated, redirect to dashboard
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
+  const { loading: authLoading } = useUser();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +47,6 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Ensure user document exists in Firestore
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
 
