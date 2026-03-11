@@ -28,7 +28,7 @@ export default function PremiumPage() {
     
     toast({ 
       title: "Opening Payment Page", 
-      description: "Complete your payment at Paystack to unlock premium features." 
+      description: "Complete your payment to unlock premium features." 
     });
   };
 
@@ -155,7 +155,7 @@ export default function PremiumPage() {
               >
                 {isPremium ? 'Already Premium' : (
                   <>
-                    Pay with Paystack <ExternalLink className="ml-2 w-5 h-5" />
+                    Pay now <ExternalLink className="ml-2 w-5 h-5" />
                   </>
                 )}
               </Button>
