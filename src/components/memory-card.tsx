@@ -1,9 +1,18 @@
 "use client"
 
-import { Memory } from '@/lib/store';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Calendar, Quote, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+
+interface Memory {
+  id: string;
+  date: string;
+  whatHappened: string;
+  whatMadeYouHappy: string;
+  didYouLearnSomething?: string;
+  story: string;
+  photoUrl?: string;
+}
 
 interface MemoryCardProps {
   memory: Memory;
@@ -11,7 +20,7 @@ interface MemoryCardProps {
 
 export function MemoryCard({ memory }: MemoryCardProps) {
   return (
-    <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group">
+    <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group bg-white">
       {memory.photoUrl && (
         <div className="relative aspect-[16/9] w-full overflow-hidden">
           <Image 
@@ -38,13 +47,13 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 
         <div className="space-y-3 border-t border-border pt-4">
           <div className="flex gap-2">
-            <span className="text-xs font-bold text-primary uppercase">Happy Moment</span>
-            <p className="text-sm text-muted-foreground line-clamp-1 italic">{memory.whatMadeYouHappy}</p>
+            <span className="text-xs font-bold text-primary uppercase w-24 shrink-0">I was happy:</span>
+            <p className="text-sm text-muted-foreground line-clamp-2 italic">{memory.whatMadeYouHappy}</p>
           </div>
           {memory.didYouLearnSomething && (
             <div className="flex gap-2">
-              <span className="text-xs font-bold text-accent uppercase">Lesson</span>
-              <p className="text-sm text-muted-foreground line-clamp-1 italic">{memory.didYouLearnSomething}</p>
+              <span className="text-xs font-bold text-accent uppercase w-24 shrink-0">I learned:</span>
+              <p className="text-sm text-muted-foreground line-clamp-2 italic">{memory.didYouLearnSomething}</p>
             </div>
           )}
         </div>
@@ -52,7 +61,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
       <div className="px-6 pb-6 flex items-center justify-between">
         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
           <Sparkles className="w-3 h-3" />
-          <span>AI Generated</span>
+          <span>Diary Helper</span>
         </div>
       </div>
     </Card>

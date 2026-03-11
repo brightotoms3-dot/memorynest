@@ -131,7 +131,7 @@ export default function NewMemoryPage() {
           errorEmitter.emit('permission-error', permissionError);
         });
 
-      toast({ title: "Memory created beautifully!" });
+      toast({ title: "Diary entry saved!" });
       router.push('/dashboard');
     } catch (error) {
       toast({ title: "Failed to generate story", variant: "destructive" });
@@ -163,8 +163,8 @@ export default function NewMemoryPage() {
               <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6">
                 <Bird className="w-8 h-8" />
               </div>
-              <CardTitle className="text-4xl font-headline font-bold mb-2">Capture Today</CardTitle>
-              <CardDescription className="text-primary-foreground/80 text-lg">Speak or type your day. We'll tell the story.</CardDescription>
+              <CardTitle className="text-4xl font-headline font-bold mb-2">Dear Diary...</CardTitle>
+              <CardDescription className="text-primary-foreground/80 text-lg">Tell me about your day. I'll help you reflect on it.</CardDescription>
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
           </CardHeader>
@@ -172,7 +172,7 @@ export default function NewMemoryPage() {
             <form onSubmit={handleCreate} className="space-y-8">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="happened" className="text-lg font-bold">What happened today? *</Label>
+                  <Label htmlFor="happened" className="text-lg font-bold">What's on your mind? *</Label>
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -185,8 +185,8 @@ export default function NewMemoryPage() {
                 </div>
                 <Textarea 
                   id="happened"
-                  placeholder="Tell me what you did today..."
-                  className="min-h-[100px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
+                  placeholder="Today, I..."
+                  className="min-h-[120px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   required
                   value={whatHappened}
                   onChange={(e) => setWhatHappened(e.target.value)}
@@ -196,7 +196,7 @@ export default function NewMemoryPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="happy" className="text-lg font-bold">What made you happy? *</Label>
+                  <Label htmlFor="happy" className="text-lg font-bold">What made you smile? *</Label>
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -209,7 +209,7 @@ export default function NewMemoryPage() {
                 </div>
                 <Textarea 
                   id="happy"
-                  placeholder="What was the best part?"
+                  placeholder="The best part was..."
                   className="min-h-[80px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   required
                   value={whatMadeYouHappy}
@@ -220,7 +220,7 @@ export default function NewMemoryPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="learned" className="text-lg font-bold">Any quick lessons? (Optional)</Label>
+                  <Label htmlFor="learned" className="text-lg font-bold">Anything you learned?</Label>
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -233,7 +233,7 @@ export default function NewMemoryPage() {
                 </div>
                 <Textarea 
                   id="learned"
-                  placeholder="Did you learn something new?"
+                  placeholder="One small thing I learned was..."
                   className="min-h-[80px] rounded-2xl bg-secondary/30 border-none text-lg resize-none p-6 focus-visible:ring-primary"
                   value={didYouLearnSomething}
                   onChange={(e) => setDidYouLearnSomething(e.target.value)}
@@ -243,7 +243,7 @@ export default function NewMemoryPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-bold">Add a photo (Optional)</Label>
+                  <Label className="text-lg font-bold">Add a photo of today</Label>
                   {photoDataUri && (
                     <Button 
                       variant="ghost" 
@@ -276,7 +276,7 @@ export default function NewMemoryPage() {
                   ) : (
                     <>
                       <Camera className="w-10 h-10 text-muted-foreground mb-3" />
-                      <p className="text-muted-foreground font-medium">Add a photo from your phone</p>
+                      <p className="text-muted-foreground font-medium">Tap to add a photo</p>
                     </>
                   )}
                 </div>
@@ -290,11 +290,11 @@ export default function NewMemoryPage() {
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 className="mr-2 w-6 h-6 animate-spin" /> Writing your story...
+                    <Loader2 className="mr-2 w-6 h-6 animate-spin" /> Thinking...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="mr-2 w-6 h-6" /> Save Memory
+                    <Sparkles className="mr-2 w-6 h-6" /> Save Entry
                   </>
                 )}
               </Button>

@@ -56,11 +56,11 @@ export default function DashboardPage() {
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-headline font-bold mb-2">Welcome back, {displayName.split(' ')[0]}!</h1>
-            <p className="text-muted-foreground text-lg">You have captured {memories.length} beautiful memories so far.</p>
+            <p className="text-muted-foreground text-lg">Your diary has {memories.length} entries so far.</p>
           </div>
           <Button asChild className="h-14 px-8 text-lg rounded-2xl shadow-lg btn-hover-effect bg-primary">
             <Link href="/memories/new">
-              <Plus className="mr-2 w-5 h-5" /> Add Today's Memory
+              <Plus className="mr-2 w-5 h-5" /> New Diary Entry
             </Link>
           </Button>
         </header>
@@ -89,8 +89,8 @@ export default function DashboardPage() {
                 <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-6">
                   <Bird className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-headline font-bold mb-2">Your nest is empty</h3>
-                <p className="text-muted-foreground mb-8 max-w-sm">Start your journey by capturing your first memory today. Our AI will help you tell the story.</p>
+                <h3 className="text-2xl font-headline font-bold mb-2">Your diary is empty</h3>
+                <p className="text-muted-foreground mb-8 max-w-sm">Start your journey by writing your first entry. I'll help you reflect on your day.</p>
                 <Button asChild size="lg" className="rounded-2xl px-10">
                   <Link href="/memories/new">Write My First Entry</Link>
                 </Button>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between items-end">
-                    <span className="text-sm opacity-80">Monthly Limit</span>
+                    <span className="text-sm opacity-80">Monthly Entries</span>
                     <span className="text-2xl font-bold">{memories.length} / 30</span>
                   </div>
                   <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
@@ -140,15 +140,15 @@ export default function DashboardPage() {
             <Card className="p-6 rounded-3xl border-none shadow-md space-y-6">
               <h3 className="text-xl font-headline font-bold flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-accent" />
-                Insights
+                Reflections
               </h3>
               <div className="space-y-4">
                 <div className="p-4 rounded-2xl bg-secondary/30">
                   <p className="text-sm text-muted-foreground mb-1">Consistency</p>
-                  <p className="text-2xl font-bold">{memories.length > 0 ? 'Getting Started' : 'No Streak'}</p>
+                  <p className="text-2xl font-bold">{memories.length > 0 ? 'Building a habit' : 'Just starting'}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-secondary/30">
-                  <p className="text-sm text-muted-foreground mb-1">Happy Moments</p>
+                  <p className="text-sm text-muted-foreground mb-1">Happy Days</p>
                   <p className="text-2xl font-bold">{memories.length} Captured</p>
                 </div>
               </div>
@@ -157,10 +157,10 @@ export default function DashboardPage() {
                 className="w-full rounded-2xl h-12 bg-accent text-accent-foreground btn-hover-effect"
                 disabled={!isPremium}
               >
-                <Sparkles className="w-4 h-4 mr-2" /> Generate Year Recap
+                <Sparkles className="w-4 h-4 mr-2" /> Annual Diary Recap
               </Button>
               {!isPremium && (
-                <p className="text-xs text-center text-muted-foreground">Yearly recaps are a premium feature.</p>
+                <p className="text-xs text-center text-muted-foreground">Annual recaps are a premium feature.</p>
               )}
             </Card>
           </div>
