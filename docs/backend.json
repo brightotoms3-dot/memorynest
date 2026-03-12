@@ -32,6 +32,21 @@
         "userId": { "type": "string" }
       },
       "required": ["id", "date", "whatHappened", "whatMadeYouHappy", "story", "userId"]
+    },
+    "Event": {
+      "title": "Countdown Event",
+      "description": "An important future date the user is looking forward to.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "date", "userId"]
     }
   },
   "auth": {
@@ -45,6 +60,10 @@
     "/users/{userId}/memories/{memoryId}": {
       "schema": "Memory",
       "description": "Personal timeline of daily memories for a specific user."
+    },
+    "/users/{userId}/events/{eventId}": {
+      "schema": "Event",
+      "description": "Collection of countdown events for a specific user."
     }
   }
 }

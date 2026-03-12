@@ -3,20 +3,26 @@
 
 import { useEffect, useMemo } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { useUser, useFirestore, useDoc } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useCollection } from '@/firebase';
+import { doc, collection, query } from 'firebase/firestore';
+import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 export function DailyReminder() {
   const { user } = useUser();
   const db = useFirestore();
+
   const userProfileRef = useMemo(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userProfile } = useDoc(userProfileRef);
 
+  const eventsQuery = useMemo(() => {
+    if (!user) return null;
+    return query(collection(db, 'users', user.uid, 'events'));
+  }, [db, user]);
+  const { data: events } = useCollection(eventsQuery);
+
   useEffect(() => {
-    // Only run on client side
     if (typeof window === 'undefined') return;
 
-    // Request notification permissions on mount
     const requestPermission = async () => {
       if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
@@ -29,51 +35,75 @@ export function DailyReminder() {
       const hours = now.getHours();
       const minutes = now.getMinutes();
 
-      // Check if it's 7:00 PM (19:00)
+      // Evening Streak Reminder (7:00 PM)
       if (hours === 19 && minutes === 0) {
-        const lastNotifiedDate = localStorage.getItem('last_notified_date');
+        const lastNotifiedDate = localStorage.getItem('last_notified_streak');
         const todayDate = now.toDateString();
 
         if (lastNotifiedDate !== todayDate) {
-          // Check if user already posted today
           const lastEntryDate = userProfile?.lastEntryDate ? new Date(userProfile.lastEntryDate).toDateString() : null;
           const hasPostedToday = lastEntryDate === todayDate;
 
           if (!hasPostedToday) {
             const currentStreak = userProfile?.currentStreak || 0;
-            const streakWarning = currentStreak > 0 
+            const message = currentStreak > 0 
               ? `Your ${currentStreak} day streak is about to break! Write today's memory.` 
               : "How did your day go? It's time to capture your beautiful moments.";
 
-            // Show browser notification
             if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('MemoryNest Reminder 🦜', {
-                body: streakWarning,
-              });
+              new Notification('MemoryNest 🦜', { body: message });
             }
 
-            // Show in-app toast notification as a persistent "alarm"
             toast({
               title: currentStreak > 0 ? "Keep the flame alive! 🔥" : "How did your day go?",
-              description: streakWarning,
+              description: message,
               duration: 30000,
             });
 
-            // Mark as notified for today
-            localStorage.setItem('last_notified_date', todayDate);
+            localStorage.setItem('last_notified_streak', todayDate);
           }
+        }
+      }
+
+      // Morning Event Reminders (9:00 AM)
+      if (hours === 9 && minutes === 0) {
+        const lastNotifiedDate = localStorage.getItem('last_notified_events');
+        const todayDate = now.toDateString();
+
+        if (lastNotifiedDate !== todayDate && events.length > 0) {
+          const todayStart = startOfDay(now);
+          
+          events.forEach((event: any) => {
+            const eventDate = startOfDay(parseISO(event.date));
+            const daysLeft = differenceInDays(eventDate, todayStart);
+
+            if ([0, 1, 3, 7].includes(daysLeft)) {
+              let message = "";
+              if (daysLeft === 0) message = `Today is ${event.name}! 🥳 Save the memory.`;
+              else if (daysLeft === 1) message = `${event.name} is tomorrow! 🎈`;
+              else message = `${event.name} is in ${daysLeft} days! ⏳`;
+
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('MemoryNest 🦜', { body: message });
+              }
+
+              toast({
+                title: "Event Reminder 📅",
+                description: message,
+                duration: 10000,
+              });
+            }
+          });
+
+          localStorage.setItem('last_notified_events', todayDate);
         }
       }
     };
 
-    // Check every minute
     const interval = setInterval(checkTimeAndNotify, 60000);
-    
-    // Initial check
     checkTimeAndNotify();
-
     return () => clearInterval(interval);
-  }, [userProfile]);
+  }, [userProfile, events]);
 
   return null;
 }
