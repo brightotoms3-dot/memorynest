@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createMemoryStory } from '@/ai/flows/create-memory-story';
 import { Navbar } from '@/components/navbar';
@@ -10,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Bird, Loader2, ArrowLeft, Camera, Upload, X, Mic, MicOff, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 
 export default function NewMemoryPage() {
   const [whatHappened, setWhatHappened] = useState('');
@@ -25,6 +26,9 @@ export default function NewMemoryPage() {
   const { user, loading: userLoading } = useUser();
   const db = useFirestore();
   const router = useRouter();
+
+  const userProfileRef = useMemo(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
+  const { data: userProfile } = useDoc(userProfileRef);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -74,7 +78,6 @@ export default function NewMemoryPage() {
       if (field === 'happened') setWhatHappened(prev => prev + (prev ? ' ' : '') + transcript);
       if (field === 'happy') setWhatMadeYouHappy(prev => prev + (prev ? ' ' : '') + transcript);
       if (field === 'learned') setDidYouLearnSomething(prev => prev + (prev ? ' ' : '') + transcript);
-      toast({ title: "Captured your voice!" });
     };
 
     recognition.onerror = (event: any) => {
@@ -89,6 +92,58 @@ export default function NewMemoryPage() {
     };
 
     recognition.start();
+  };
+
+  const calculateNewStreak = () => {
+    if (!userProfile) return { currentStreak: 1, longestStreak: 1, lastEntryDate: new Date().toISOString() };
+
+    const lastDate = userProfile.lastEntryDate ? new Date(userProfile.lastEntryDate) : null;
+    const now = new Date();
+    const todayStr = now.toDateString();
+    
+    if (lastDate && lastDate.toDateString() === todayStr) {
+      // Already posted today, don't increment streak but return current
+      return { 
+        currentStreak: userProfile.currentStreak || 1, 
+        longestStreak: Math.max(userProfile.longestStreak || 1, userProfile.currentStreak || 1),
+        lastEntryDate: now.toISOString()
+      };
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
+    let newStreak = 1;
+    const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
+    let freezeUsedMonth = userProfile.lastStreakFreezeUsedMonth;
+
+    if (lastDate && lastDate.toDateString() === yesterdayStr) {
+      newStreak = (userProfile.currentStreak || 0) + 1;
+    } else if (lastDate && userProfile.lastStreakFreezeUsedMonth !== currentMonth) {
+      // Streak missed, but can we use a freeze?
+      // Logic: If user missed yesterday but has a freeze available this month
+      // We'll "save" it if they were previously on a streak.
+      if ((userProfile.currentStreak || 0) > 0) {
+        newStreak = (userProfile.currentStreak || 0) + 1;
+        freezeUsedMonth = currentMonth;
+        toast({ title: "Streak Freeze Used! 🧊", description: "You missed a day, but your streak is safe." });
+      }
+    }
+
+    const newLongest = Math.max(userProfile.longestStreak || 0, newStreak);
+
+    // Celebration toasts for milestones
+    if (newStreak === 3) toast({ title: "Habit Starter 🌱", description: "3 days in a row! You're doing great." });
+    if (newStreak === 7) toast({ title: "Consistency Badge 🏅", description: "One whole week! Impressive." });
+    if (newStreak === 30) toast({ title: "Memory Master 📖", description: "30 days! You've built a real legacy." });
+
+    return { 
+      currentStreak: newStreak, 
+      longestStreak: newLongest, 
+      lastEntryDate: now.toISOString(),
+      lastStreakFreezeUsedMonth: freezeUsedMonth
+    };
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -130,6 +185,10 @@ export default function NewMemoryPage() {
           });
           errorEmitter.emit('permission-error', permissionError);
         });
+
+      // Update User Streak
+      const streakUpdate = calculateNewStreak();
+      updateDoc(doc(db, 'users', user.uid), streakUpdate);
 
       toast({ title: "Diary entry saved!" });
       router.push('/dashboard');

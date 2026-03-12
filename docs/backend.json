@@ -1,14 +1,19 @@
+
 {
   "entities": {
     "User": {
       "title": "User Profile",
-      "description": "Information about a registered user and their subscription status.",
+      "description": "Information about a registered user, their subscription status, and journaling streaks.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
-        "isPremium": { "type": "boolean" }
+        "isPremium": { "type": "boolean" },
+        "currentStreak": { "type": "number", "default": 0 },
+        "longestStreak": { "type": "number", "default": 0 },
+        "lastEntryDate": { "type": "string", "description": "ISO date of the last entry made." },
+        "lastStreakFreezeUsedMonth": { "type": "string", "description": "The YYYY-MM when the streak freeze was last used." }
       },
       "required": ["id", "email", "name"]
     },
