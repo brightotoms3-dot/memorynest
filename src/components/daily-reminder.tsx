@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useMemo } from 'react';
@@ -65,7 +64,7 @@ export function DailyReminder() {
         }
       }
 
-      // Morning Event Reminders (9:00 AM)
+      // Morning "Never Forget" Event Reminders (9:00 AM)
       if (hours === 9 && minutes === 0) {
         const lastNotifiedDate = localStorage.getItem('last_notified_events');
         const todayDate = now.toDateString();
@@ -77,10 +76,12 @@ export function DailyReminder() {
             const eventDate = startOfDay(parseISO(event.date));
             const daysLeft = differenceInDays(eventDate, todayStart);
 
-            if ([0, 1, 3, 7].includes(daysLeft)) {
+            // Never Forget Mode: 30, 7, 3, 1, and 0 days
+            if ([0, 1, 3, 7, 30].includes(daysLeft)) {
               let message = "";
-              if (daysLeft === 0) message = `Today is ${event.name}! 🥳 Save the memory.`;
+              if (daysLeft === 0) message = `Today is ${event.name}! 🥳 Capture this milestone.`;
               else if (daysLeft === 1) message = `${event.name} is tomorrow! 🎈`;
+              else if (daysLeft === 30) message = `${event.name} is in 1 month! Time to start planning. 🗓️`;
               else message = `${event.name} is in ${daysLeft} days! ⏳`;
 
               if ('Notification' in window && Notification.permission === 'granted') {
@@ -88,9 +89,9 @@ export function DailyReminder() {
               }
 
               toast({
-                title: "Event Reminder 📅",
+                title: "Never Forget Reminder 📅",
                 description: message,
-                duration: 10000,
+                duration: 15000,
               });
             }
           });

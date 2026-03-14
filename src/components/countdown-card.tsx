@@ -1,15 +1,24 @@
-
 "use client"
 
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Trash2, Edit2, PartyPopper, Calendar, ArrowRight } from 'lucide-react';
+import { Trash2, Edit2, PartyPopper, ArrowRight, Sparkles, Loader2, Gift } from 'lucide-react';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
+import { suggestGifts, type SuggestGiftsOutput } from '@/ai/flows/suggest-gifts';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Event {
   id: string;
@@ -27,6 +36,8 @@ interface CountdownCardProps {
 
 export function CountdownCard({ event }: CountdownCardProps) {
   const db = useFirestore();
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<SuggestGiftsOutput | null>(null);
 
   const today = startOfDay(new Date());
   const eventDate = startOfDay(parseISO(event.date));
@@ -36,7 +47,6 @@ export function CountdownCard({ event }: CountdownCardProps) {
   const isToday = daysRemaining === 0;
   const isPast = daysRemaining < 0;
 
-  // Calculate progress
   const totalDuration = Math.max(differenceInDays(eventDate, createdAtDate), 1);
   const elapsed = differenceInDays(today, createdAtDate);
   const progress = isPast ? 100 : Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
@@ -51,6 +61,23 @@ export function CountdownCard({ event }: CountdownCardProps) {
       }
     }
   };
+
+  const handleSuggestGifts = async () => {
+    setIsSuggesting(true);
+    try {
+      const result = await suggestGifts({
+        eventName: event.name,
+        description: event.description,
+      });
+      setSuggestions(result);
+    } catch (error) {
+      toast({ title: "AI couldn't generate ideas", variant: "destructive" });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const isGiftApplicable = daysRemaining <= 14 && daysRemaining > 0;
 
   return (
     <Card className={`p-6 rounded-3xl border-none shadow-md overflow-hidden relative group transition-all hover:shadow-lg ${isToday ? 'bg-primary text-primary-foreground' : 'bg-white'}`}>
@@ -84,21 +111,68 @@ export function CountdownCard({ event }: CountdownCardProps) {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <PartyPopper className="w-6 h-6 animate-bounce" />
-                <span className="text-xl font-bold">Today is your event!</span>
+                <span className="text-xl font-bold">Today is the day!</span>
               </div>
               <Button asChild variant="secondary" className="w-full rounded-xl">
                 <Link href="/memories/new">
-                  Save as Memory <ArrowRight className="ml-2 w-4 h-4" />
+                  Capture this Milestone <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </Button>
             </div>
           ) : isPast ? (
             <div className="text-muted-foreground font-medium">This event has passed.</div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold">{daysRemaining}</span>
-                <span className="text-sm font-medium opacity-80">Days Remaining</span>
+            <div className="space-y-4">
+              <div className="flex items-baseline justify-between">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold">{daysRemaining}</span>
+                  <span className="text-sm font-medium opacity-80">Days Remaining</span>
+                </div>
+                {isGiftApplicable && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="rounded-full h-8 px-3 text-xs bg-accent/10 border-accent text-accent hover:bg-accent hover:text-white"
+                        onClick={handleSuggestGifts}
+                      >
+                        <Sparkles className="w-3 h-3 mr-1.5" /> Gift Ideas
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="rounded-[2rem] max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Gift className="w-5 h-5 text-accent" /> AI Gift Suggestions
+                        </DialogTitle>
+                        <DialogDescription>
+                          Thoughtful ideas for {event.name}.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        {isSuggesting ? (
+                          <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                            <p className="text-sm text-muted-foreground">Asking the AI experts...</p>
+                          </div>
+                        ) : suggestions ? (
+                          <>
+                            <ul className="space-y-3">
+                              {suggestions.suggestions.map((idea, i) => (
+                                <li key={i} className="bg-secondary/30 p-3 rounded-2xl text-sm font-medium">
+                                  {idea}
+                                </li>
+                              ))}
+                            </ul>
+                            <p className="text-xs text-muted-foreground italic px-1">
+                              {suggestions.reasoning}
+                            </p>
+                          </>
+                        ) : null}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
               <Progress value={progress} className={`h-2 ${isToday ? 'bg-white/20' : 'bg-secondary'}`} />
             </div>
